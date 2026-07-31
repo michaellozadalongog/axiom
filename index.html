@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Live Solana token research dashboard for manual Axiom execution." />
+  <title>AlphaHunter Live — Axiom Assistant</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">LIVE SOLANA RESEARCH</div>
+    <h1>AlphaHunter <span>v5 EVIDENCE</span></h1>
+  </div>
+  <div class="status"><span class="dot"></span><span id="connectionText">Cloud signal history + outcome measurement</span></div>
+</header>
+
+<main>
+  <section class="notice">
+    <strong>Research mode:</strong> AlphaHunter never connects to your wallet. It reads public DEX data, copies the token address, and opens Axiom for manual verification and execution.
+  </section>
+
+  <section class="controls panel">
+    <div class="field grow">
+      <label for="contract">Solana token contract address</label>
+      <input id="contract" placeholder="Paste a token address…" autocomplete="off" spellcheck="false" />
+    </div>
+    <button id="analyzeBtn" class="primary">Analyze live</button>
+    <button id="axiomBtn" class="secondary">Open Axiom</button>
+  </section>
+
+  <section class="riskbar panel">
+    <div><strong>Your guardrails</strong><span>Saved only in this browser</span></div>
+    <label>Max buy <span class="input-wrap">$<input id="maxBuy" type="number" min="1" value="10"></span></label>
+    <label>Daily stop <span class="input-wrap">$<input id="dailyStop" type="number" min="1" value="25"></span></label>
+    <label>Min liquidity <span class="input-wrap">$<input id="minLiquidity" type="number" min="1000" value="50000"></span></label>
+  </section>
+
+  <section class="grid">
+    <article class="panel token-card">
+      <div id="loading" class="loading hidden">Fetching live pools…</div>
+      <div class="token-head">
+        <img id="coinImage" class="coin hidden" alt="">
+        <div id="coinFallback" class="coin">?</div>
+        <div>
+          <h2 id="tokenName">Select a token</h2>
+          <div class="muted mono" id="tokenMeta">Paste a contract address to begin</div>
+          <div class="links" id="tokenLinks"></div>
+        </div>
+        <div class="score-wrap">
+          <div class="score" id="score">--</div>
+          <span>Signal score</span>
+        </div>
+      </div>
+
+      <div id="errorBox" class="error hidden"></div>
+
+      <div class="metrics">
+        <div><span>Price</span><strong id="price">--</strong></div>
+        <div><span>Market cap</span><strong id="marketCap">--</strong></div>
+        <div><span>Liquidity</span><strong id="liquidity">--</strong></div>
+        <div><span>5m volume</span><strong id="volume">--</strong></div>
+        <div><span>5m buys / sells</span><strong id="ratio">--</strong></div>
+        <div><span>Token-pair age</span><strong id="age">--</strong></div>
+        <div><span>5m change</span><strong id="change5m">--</strong></div>
+        <div><span>1h change</span><strong id="change1h">--</strong></div>
+        <div><span>Primary DEX</span><strong id="dex">--</strong></div>
+      </div>
+
+      <div class="trade-box">
+        <div class="trade-row">
+          <span>Quick buy</span>
+          <button class="buy" data-buy="5">Buy $5</button>
+          <button class="buy" data-buy="10">Buy $10</button>
+          <button class="buy" data-buy="25">Buy $25</button>
+          <button class="buy" data-buy="custom">Custom</button>
+        </div>
+        <div class="trade-row">
+          <span>Quick sell</span>
+          <button class="sell" data-sell="25">Sell 25%</button>
+          <button class="sell" data-sell="50">Sell 50%</button>
+          <button class="sell" data-sell="75">Sell 75%</button>
+          <button class="sell danger" data-sell="100">Sell all</button>
+        </div>
+        <div class="trade-row compact">
+          <span>Paper test</span>
+          <button id="paperEntry" class="secondary">Record paper entry</button>
+          <button id="copyCa" class="secondary">Copy contract</button>
+        </div>
+        <p class="fineprint">Trade buttons create a preview and then open Axiom. Verify the token address, liquidity, fees, and slippage inside Axiom before signing.</p>
+      </div>
+    </article>
+
+    <aside class="panel">
+      <h3>Automated checks</h3>
+      <div id="checks" class="checks"><div class="check neutral">Waiting for token</div></div>
+      <h3 class="mt">Score explanation</h3>
+      <ul id="reasons" class="reasons"><li>Live analysis appears here.</li></ul>
+      <div class="warning">
+        <strong>Not checked yet</strong>
+        <p>Mint/freeze authority, holder concentration, developer history, bundled wallets, and sellability require additional on-chain providers. Unknown does not mean safe.</p>
+      </div>
+    </aside>
+  </section>
+
+  <section class="panel discovery">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">DISCOVERY FEED</div>
+        <h2>Recently boosted Solana tokens</h2>
+        <p>Boosting is paid promotion—not a quality signal. These are leads for analysis only.</p>
+      </div>
+      <button id="refreshBtn" class="secondary">Refresh feed</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Token</th><th>Score</th><th>Market cap</th><th>Liquidity</th><th>5m activity</th><th>Age</th><th></th></tr></thead>
+        <tbody id="watchRows"><tr><td colspan="7" class="muted">Loading live feed…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel journal">
+    <div class="section-head">
+      <div><div class="eyebrow">PAPER JOURNAL</div><h2>Signals recorded in this browser</h2></div>
+      <button id="clearJournal" class="secondary">Clear journal</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Time</th><th>Token</th><th>Entry</th><th>Score</th><th>Liquidity</th><th>Contract</th></tr></thead>
+        <tbody id="journalRows"><tr><td colspan="6" class="muted">No paper entries yet.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel real-safety">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">ON-CHAIN SAFETY</div>
+        <h2>Real Solana contract checks</h2>
+        <p>Runs through a Netlify serverless function so RPC/provider credentials are never exposed in browser code.</p>
+      </div>
+      <button id="runSafety" class="primary">Run full safety scan</button>
+    </div>
+    <div class="safety-grid">
+      <div><span>Mint authority</span><strong id="mintAuthority">--</strong></div>
+      <div><span>Freeze authority</span><strong id="freezeAuthority">--</strong></div>
+      <div><span>Total supply</span><strong id="tokenSupply">--</strong></div>
+      <div><span>Top 10 concentration</span><strong id="top10">--</strong></div>
+      <div><span>Largest account</span><strong id="largestHolder">--</strong></div>
+      <div><span>On-chain risk</span><strong id="chainRisk">--</strong></div>
+    </div>
+    <div id="safetyNotes" class="checks"><div class="check neutral">Analyze a token, then run the safety scan.</div></div>
+  </section>
+
+  <section class="panel wallet-monitor">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">WALLET INTELLIGENCE</div>
+        <h2>Watch a Solana wallet</h2>
+        <p>Requires a free Helius API key configured as <code>HELIUS_API_KEY</code> in Netlify.</p>
+      </div>
+    </div>
+    <div class="controls inline-controls">
+      <div class="field grow"><label for="walletAddress">Wallet address</label><input id="walletAddress" placeholder="Paste a wallet address…"></div>
+      <button id="watchWallet" class="primary">Load activity</button>
+    </div>
+    <div id="walletStatus" class="muted"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Time</th><th>Type</th><th>Description</th><th>Signature</th></tr></thead>
+        <tbody id="walletRows"><tr><td colspan="4" class="muted">No wallet loaded.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel auto-scout">
+    <div class="section-head"><div><div class="eyebrow">AUTO SCOUT</div><h2>Automatic opportunity filter</h2><p>Refreshes live candidates, scores them, runs safety checks, and surfaces only tokens that pass your rules.</p></div><div class="auto-actions"><button id="toggleAuto" class="primary">Start Auto Scout</button><button id="notifyBtn" class="secondary">Enable notifications</button></div></div>
+    <div class="auto-settings">
+      <label>Minimum score<input id="autoMinScore" type="number" min="0" max="100" value="65"></label>
+      <label>Minimum liquidity<span class="input-wrap">$<input id="autoMinLiquidity" type="number" min="1000" value="50000"></span></label>
+      <label>Maximum top-10 concentration<span class="input-wrap"><input id="autoMaxTop10" type="number" min="1" max="100" value="45">%</span></label>
+      <label>Refresh interval<select id="autoInterval"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="300">5 minutes</option></select></label>
+    </div>
+    <div class="auto-status"><div><span>Status</span><strong id="autoStatus">Stopped</strong></div><div><span>Last scan</span><strong id="lastAutoScan">--</strong></div><div><span>Candidates checked</span><strong id="autoChecked">0</strong></div><div><span>Qualified signals</span><strong id="autoQualified">0</strong></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Token</th><th>Score</th><th>Liquidity</th><th>Top 10</th><th>Authorities</th><th>Decision</th><th></th></tr></thead><tbody id="autoRows"><tr><td colspan="7" class="muted">Start Auto Scout to begin.</td></tr></tbody></table></div>
+    <p class="fineprint">Auto Scout never trades. Keep this browser tab open for continuous scanning in v4.</p>
+  </section>
+
+
+  <section class="panel evidence-lab">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">EVIDENCE LAB</div>
+        <h2>Is the strategy developing an edge?</h2>
+        <p>The cloud scanner records candidates every five minutes and checks later prices so performance can be measured instead of guessed.</p>
+      </div>
+      <div class="auto-actions">
+        <button id="refreshEvidence" class="primary">Refresh evidence</button>
+        <button id="runCloudScan" class="secondary">Run scan now</button>
+      </div>
+    </div>
+
+    <div class="evidence-stats">
+      <div><span>Stored signals</span><strong id="storedSignals">--</strong></div>
+      <div><span>Signals with outcomes</span><strong id="measuredSignals">--</strong></div>
+      <div><span>30m win rate</span><strong id="winRate30">--</strong></div>
+      <div><span>Average 30m return</span><strong id="avgReturn30">--</strong></div>
+      <div><span>Best measured return</span><strong id="bestReturn">--</strong></div>
+      <div><span>Last cloud scan</span><strong id="lastCloudScan">--</strong></div>
+    </div>
+
+    <div id="evidenceMessage" class="check neutral">Loading cloud evidence…</div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Detected</th><th>Token</th><th>Entry MC</th><th>Score</th>
+            <th>30m</th><th>1h</th><th>4h</th><th>24h</th><th>Safety</th>
+          </tr>
+        </thead>
+        <tbody id="evidenceRows">
+          <tr><td colspan="9" class="muted">No cloud data loaded.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="fineprint">A positive result is not proof of a durable edge. Fees, slippage, failed exits, selection bias, and changing market conditions must still be considered.</p>
+  </section>
+
+</main>
+
+<dialog id="orderDialog">
+  <form method="dialog">
+    <h2 id="orderTitle">Order preview</h2>
+    <div id="orderBody" class="order-body"></div>
+    <label class="confirm-line"><input id="verifyCheck" type="checkbox"> I will verify the exact contract inside Axiom.</label>
+    <div class="dialog-actions">
+      <button value="cancel" class="secondary">Cancel</button>
+      <button id="continueAxiom" value="default" class="primary" disabled>Copy + open Axiom</button>
+    </div>
+  </form>
+</dialog>
+
+<footer>
+  Public market data supplied by DEX Screener. Research tool only—not financial advice. New tokens can become worthless or impossible to sell.
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
